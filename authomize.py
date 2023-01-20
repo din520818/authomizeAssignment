@@ -8,7 +8,7 @@ import sys
 import json
 script_root_path = os.path.abspath(os.path.dirname(__file__))
 sys.path.append(script_root_path)
-from graphUtils.graphUtils import Graph
+from graphUtils.graphUtils import Graph, Node, Edge
 
 
 def getPermissionsJsonList(permissionsJsonLFile: str):
@@ -33,14 +33,20 @@ def getPermissionsJsonList(permissionsJsonLFile: str):
 def buildPermissionsGraph(permissionsJsonList):
     graphObj = Graph()
     for permissionsJson in permissionsJsonList:
-        resourceId = permissionsJson['name']
-        resourceType = permissionsJson['asset_type']
+        resourceId = permissionsJson['name'].split("//cloudresourcemanager.googleapis.com/")[1]
+        resourceType = permissionsJson['asset_type'].split("cloudresourcemanager.googleapis.com/")[1].lower()
         resourceNode = graphObj.add_node(resourceId, resourceType)
 
         # create edges for resource -> parent resource
-        for ancestor in permissionsJson['ancestors']:
-            parentResourceNode = graphObj.add_node(ancestor, "resource")
-            graphObj.add_edge(resourceNode, parentResourceNode, "is_child_of")
+        # add edges for ancestor-child relationships
+        for ancestorIndexCount in range(len(permissionsJson["ancestors"])-1):
+            parentResourceId = permissionsJson["ancestors"][ancestorIndexCount + 1]
+            parentResourceType = parentResourceId.split("/")[0]
+            parentNode = graphObj.add_node(parentResourceId, parentResourceType)
+            childResourceId = permissionsJson["ancestors"][ancestorIndexCount]
+            childResourceType = childResourceId.split("/")[0]
+            childNode = graphObj.add_node(childResourceId, childResourceType)
+            graphObj.add_edge(childNode, parentNode, "is-child-of")
 
         # create edges for resource -> identity with role
         for binding in permissionsJson['iam_policy']['bindings']:
@@ -51,26 +57,42 @@ def buildPermissionsGraph(permissionsJsonList):
     return graphObj
 
 
+def getPermissionsTree(graphObj):
+    for edge in graphObj.edges:
+        fromNode = edge.from_node
+        fromNodeId = fromNode._id
+        fromNodeType = fromNode._type
+
+        toNode = edge.to_node
+        toNodeId = toNode._id
+        toNodeType = toNode._type
+
+        type = edge._type
+        print(f"{fromNodeId}----{type}-----{toNodeId}")
+
+
 def getResourceHierarchy(graph: Graph, resource_id: str):
     # DFS
-    resource = None
+    resourceNode = None
+    resourceType = resource_id.split("/")[0]
     for node in graph.nodes:
-        if node.id == resource_id and node.type == 'resource':
-            resource = node
+        if node._id == resource_id and node._type == resourceType:
+            resourceNode = node
             break
-    if resource is None:
+    if resourceNode is None:
         return None
 
-    ancestors = [resource.id]
-    stack = [resource]
+    ancestors = []
+    stack = [resourceNode]
     while stack:
         current = stack.pop()
         for edge in graph.edges:
-            if edge.to_node == current and edge.type == 'parent':
-                parent = edge.from_node
-                ancestors.append(parent.id)
+            if edge.from_node == current and edge._type == 'is-child-of':
+                parent = edge.to_node
+                ancestors.append(parent._id)
                 stack.append(parent)
     return ancestors
+
 
 def get_user_permissions(graph: Graph, user_email: str):
     output = []
@@ -90,10 +112,16 @@ def authomizeMain():
         permissionsJsonLFile = f"{script_root_path}/data/permissions.jsonl"
         # update the getPermissionsJsonList function if you want to get data from other sources
         getPermissionsStat, permissionsJsonList = getPermissionsJsonList(permissionsJsonLFile)
-        print("Permissions JSON list: {}".format(permissionsJsonList))
         if getPermissionsStat == 0:
+            # Task 1
             permissionsGraph = buildPermissionsGraph(permissionsJsonList)
-            print(get_user_permissions(permissionsGraph, "user:ron@test.authomize.com"))
+            #getPermissionsTree(permissionsGraph)
+            print(f"Graph generated: {permissionsGraph}")
+            print("__Task 1 completed__")
+            resourceName = "folders/6"
+            resourceHierarchy = getResourceHierarchy(permissionsGraph, resourceName)
+            print(f"resourceHierarchy of {resourceName} is {resourceHierarchy} ")
+            print("__Task 2 completed__")
             return 0
         else:
             return 1
@@ -103,5 +131,4 @@ def authomizeMain():
 
 
 if __name__ == "__main__":
-    print("Authomize assignment main")
     authomizeMain()
