@@ -9,6 +9,10 @@ class Node:
             return NotImplemented
         return self._id == newNode._id and self._type == newNode._type
 
+    def __hash__(self):
+        # return a unique hash value for each instance of the class
+        return hash(f"{self._id}-{self._type}")
+
 
 class Edge:
     def __init__(self, from_node: Node, to_node: Node, _type: str):
@@ -21,6 +25,10 @@ class Edge:
             # don't attempt to compare against unrelated types
             return NotImplemented
         return self.from_node == newEdge.from_node and self.to_node == newEdge.to_node and self._type == newEdge._type
+
+    def __hash__(self):
+        # return a unique hash value for each instance of the class
+        return hash(f"{self.from_node}-{self._type}-{self.to_node}")
 
 
 class Graph:
