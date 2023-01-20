@@ -1,7 +1,7 @@
 Authomize programming assignment 
-
+--------
 What is a Graph 
-
+--
 Graph is an ordered pair  = ( , ) when: 
 
 - is a set of vertices 
@@ -16,7 +16,7 @@ A graph may be directed or undirected.
 ![](assets/graph.png)
 
 Implementing a Graph Guidance 
-
+---
 The reason we want to you implement the following tasks in the form of a graph is that it makes modeling permission structure simple, as well as enables expansion of the permission model and adding new features. Also, this is how we implement graph modeling, and we want to see that you can get into this state of mind. 
 
 A Good Graph Implementation Guideline 
@@ -26,30 +26,31 @@ A structure of a graph means keeping a separate collection for:
 - nodes - representing the different entities. For now, that would be identities and resources. In a future upgrade, identity could have a subtype 
 - edges - representing the **relationship between** different nodes. For example, if a resource has a parent, then an edge should represent that relationship between the nodes. Think what other relationships you should have between nodes, and represent them as well using edges. 
 
+
+---------
 from typing import List 
 
 class Node: 
+- type: str   \# 'identity', 'resource',
+- id: str
 
-`   `type: str   # 'identity', 'resource', ... 
+class Edge:    
+- from: Node    
+- to: Node    
+- type: str 
 
-`   `id: str 
+class Graph: 
+- edges: List[Edge]    
+- nodes: List[Node] 
 
-![](assets/blackBar.png)
-
-class Edge:    from: Node    to: Node    type: str 
-
-class Graph: ![](assets/blackBar3.png)
-
-`   `edges: List[Edge]    nodes: List[Node] 
-
-def get\_user\_permissions(graph: Graph, user\_email: str): ![](Aspose.Words.24c2d415-a1d5-44b3-8eb3-250cf99a5084.004.png)   pass 
-
-![](assets/blackBar1.png)
+def get\_user\_permissions(graph: Graph, user\_email: str): 
+- pass 
+-------
 
 Auxiliary methods and functions should be added for manipulating the graph (adding nodes and edges). 
-
+---
 General Notes 
-
+------
 - This task is long, so don’t feel bad if you don’t finish it all on time (you won’t be penalized by it) 
 - The completion of the assignment, should be in the following priority order: 
   - Make all the tasks work. 
@@ -62,7 +63,7 @@ General Notes
 - Read the whole task before you start coding. This will help you to think of a better design. 
 
 Task 1 - Build a Permission Graph From Static Data 
-
+------
 In this task you are asked to build a permission graph based on GCP (Google Cloud Platform) permissions model. 
 
 In order to build the graph, you need to parse a[ JSON lines file ](http://jsonlines.org/)that represents the GCP permission model. 
@@ -99,7 +100,7 @@ Notes:
 - You are the architect of this graph implementation, and you want it to be useful in the future. Keep in mind how you would expand it to support various other tasks (e.g, representing groups, nested groups, more complicated questions about user-resource permissions. Take a look at the rest of this exercise for some examples). **You will be asked to explain your design considerations, and how you would upgrade the graph implementation to support new node types and relationships (edges)**. 
 
 Task 2 - Resource hierarchy 
-
+-----
 In this task, given a Resource, you need to return all the hierarchy of the resource 
 
 **Input:** Resource unique ID 
@@ -124,7 +125,7 @@ Output:
 [‘Folder5’, ‘Folder1’, ‘Organization1’] 
 
 Task 3 - Who has what 
-
+-----
 In this task, given an Identity, you need to return all the resources that identity has permissions on. 
 
 **Input:** Identity unique ID 
@@ -146,7 +147,7 @@ Input: ‘alex@test.authomize.com’ Output:
 ] 
 
 Task 4 - What has who 
-
+----
 In this task, given a Resource, you need to return all the Identities that have permissions on that resource. 
 
 **Input:** Resource unique ID 
@@ -166,7 +167,7 @@ Output:
 ] 
 
 Task 5  - Downloading User Data From Google 
-
+-----
 As you may have noticed, in our graph we don’t have much info about the Identities (User / Group/ Service account) because this data is missing from our input file. 
 
 In order to complete that task, you will need to get the relevant info using GoogleAdminAPI, using a key file: 
@@ -187,7 +188,7 @@ You need to investigate the documentation about how to use the API to get the ne
 1. Fetch the list of users in each group. 
 
 Task 6  - Identities Enrichment (Bonus) 
-
+-----
 Answer previous tasks, but this time don’t stop at the identity level. 
 
 1. For user->resource walks, make sure you also go through groups a user belongs to and are granted with permissions. 
