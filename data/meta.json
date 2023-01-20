@@ -1,0 +1,33 @@
+{
+  "name": "//cloudresourcemanager.googleapis.com/folders/188906894377",
+  "asset_type": "cloudresourcemanager.googleapis.com/Folders",
+  "iam_policy": {
+    "etag": "BwWbYXSvzgs=",
+    "bindings": [
+      {
+        "roles": "roles/owner",
+        "members": [
+          "serviceAccount:dev-manager@striking-arbor-264209.iam.serviceaccount.com",
+          "serviceAccount:devops-dude-1@striking-arbor-264209.iam.serviceaccount.com"
+       ]
+      },
+      {
+        "roles": "roles/resourcemanager.folderAdmin",
+        "members": [
+          "user:ron@test.authomize.com"
+       ]
+      },
+      {
+        "roles": "roles/resourcemanager.folderEditor",
+        "members": [
+          "user:ron@test.authomize.com"
+       ]
+      }
+    ]
+  },
+  "ancestors": [
+    "folders/188906894377",
+    "folders/76716091627",
+    "organizations/1066060271767"
+  ]
+}
