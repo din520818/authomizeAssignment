@@ -9,7 +9,7 @@ import json
 from typing import List, Tuple
 script_root_path = os.path.abspath(os.path.dirname(__file__))
 sys.path.append(script_root_path)
-from graphUtils.graphUtils import Graph
+from graphWeb.graphWeb import Graph
 
 
 def getPermissionsJsonList(permissionsJsonLFile: str) -> [int, List]:
@@ -63,24 +63,7 @@ def buildPermissionsGraph(permissionsJsonList: List) -> Graph:
     return graphObj
 
 
-def getPermissionsTree(graphObj: Graph) -> None:
-    """
-    :param graphObj: Graph object with nodes and edges
-    :return: None
-    Remarks: Prints all the relationships between nodes
-    """
-    print("\nAll the relationships in the graph are:\n")
-    for edge in graphObj.edges:
-        fromNode = edge.from_node
-        fromNodeId = fromNode._id
-        toNode = edge.to_node
-        toNodeId = toNode._id
-        type = edge._type
-        print(f"{fromNodeId}-{fromNode._type}----{type}-----{toNodeId}-{toNode._type}")
-    print("-"*10)
-
-
-def getResourceHierarchy(graph: Graph, resource_id: str) -> List[str]:
+def getResourceAncestors(graph: Graph, resource_id: str) -> List[str]:
     """
     :param graph: Graph object with nodes and edges
     :param resource_id: Resource identifier
@@ -88,9 +71,8 @@ def getResourceHierarchy(graph: Graph, resource_id: str) -> List[str]:
     """
     # DFS
     resourceNode = None
-    resourceType = resource_id.split("/")[0].capitalize()
     for node in graph.nodes:
-        if node._id == resource_id and node._type == resourceType:
+        if node._id == resource_id:
             resourceNode = node
             break
     if resourceNode is None:
@@ -108,26 +90,97 @@ def getResourceHierarchy(graph: Graph, resource_id: str) -> List[str]:
     return ancestors
 
 
+def getResourceChildren(graph: Graph, resource_id: str) -> List[str]:
+    """
+    :param graph: Graph object with nodes and edges
+    :param resource_id: Resource identifier
+    :return: list of children in the hierarchy
+    """
+    # DFS
+    resourceNode = None
+    for node in graph.nodes:
+        if node._id == resource_id:
+            resourceNode = node
+            break
+    if resourceNode is None:
+        return []
+
+    children = []
+    stack = [resourceNode]
+    while stack:
+        current = stack.pop()
+        for edge in graph.edges:
+            if edge.to_node == current and edge._type == 'is-child-of':
+                child = edge.from_node
+                children.append(child._id)
+                stack.append(child)
+    return children
+
+
 def get_identity_permissions(graph: Graph, identity_id: str) -> List[Tuple[str, str, str]]:
+    """
+    :param graph: Graph object with nodes and edges
+    :param identity_id: user identifier
+    :return: list of tuples of resource identifier, resource type and role as its items
+    """
     permissions = []
     queue = []
     visited = set()
-    # find the identity node
-    identityNode = next(node for node in graph.nodes
-                        if node._id.split(":")[-1] == identity_id and node._type == 'identity')
-    print(identityNode._id)
-    queue.append(identityNode)
-    visited.add(identityNode)
+
+    # First, find all the resources that the identity has a direct role on
+    for edge in graph.edges:
+        if edge.from_node._id.split(":")[-1] == identity_id:
+            queue.append(edge)
+            visited.add(edge.to_node._id)
+
+    # For each resource found, add its permissions to the final list
     while queue:
-        current_node = queue.pop(0)
-        for edge in graph.edges:
-            if edge.from_node == current_node and "roles/" in edge._type and edge.to_node not in visited:
-                resourceName = edge.to_node._id
-                resourceType = edge.to_node._type
-                role = edge._type.split("/")[-1]
-                permissions.append((resourceName, resourceType, role))
-                queue.append(edge.to_node)
-                visited.add(edge.to_node)
+        edge = queue.pop(0)
+        resource_id = edge.to_node._id
+        resource_type = edge.to_node._type
+        role = edge._type
+        permissions.append((resource_id, resource_type, role))
+
+        # Then, find all the children of the resource, and add them to the queue
+        children = getResourceChildren(graph, resource_id)
+        for child in children:
+            if child not in visited:
+                permissions.append((child, resource_type, role))
+                visited.add(edge.to_node._id)
+    return permissions
+
+
+def get_resource_permissions(graph: Graph, resource_id: str) -> List[Tuple[str, str]]:
+    """
+    :param graph: Graph object with nodes and edges
+    :param resource_id: Resource identifier
+    :return: list of tuples of Identity name and Role as its items
+    """
+    permissions = []
+    queue = []
+    visited = set()
+
+    # First, find all the resources that the identity has a direct role on
+    for edge in graph.edges:
+        if edge.to_node._id == resource_id and "roles" in edge._type:
+            queue.append(edge)
+            visited.add(edge.from_node._id)
+
+    # For each resource found, add its permissions to the final list
+    while queue:
+        edge = queue.pop(0)
+        if "roles" in edge._type:
+            identityName = edge.from_node._id
+            role = edge._type
+            permissions.append((identityName, role))
+
+            # Then, find all the ancestors of the resource, and add them to the queue
+            parentList = getResourceAncestors(graph, resource_id)
+            for parent in parentList:
+                if parent not in visited:
+                    parentEdges = graph.find_edges_to_node(to_node_id=parent)
+                    queue.extend(parentEdges)
+                    visited.add(parent)
     return permissions
 
 
@@ -143,17 +196,25 @@ def authomizeMain() -> int:
         if getPermissionsStat == 0:
             # Task 1
             permissionsGraph = buildPermissionsGraph(permissionsJsonList)
-            getPermissionsTree(permissionsGraph)
+            permissionsGraph.print_graph()
             print(f"Graph generated: {permissionsGraph}")
             print("__Task 1 completed__")
-            resourceId = "folders/6"
-            resourceHierarchy = getResourceHierarchy(permissionsGraph, resourceId)
-            print(f"resourceHierarchy of {resourceId} is {resourceHierarchy} ")
+            resourceId = "folders/7"
+            resourceAncestors = getResourceAncestors(permissionsGraph, resourceId)
+            print(f"resourceAncestors of {resourceId} is {resourceAncestors} ")
+            resourceId = "folders/2"
+            resourceChildren = getResourceChildren(permissionsGraph, resourceId)
+            resourceId = "organizations/1"
+            print(f"resourceChildren of {resourceId} is {resourceChildren} ")
             print("__Task 2 completed__")
-            userName = "ron@test.authomize.com"
-            resourcePermissions = get_identity_permissions(permissionsGraph, userName)
-            print(f"resourcePermissions of {userName} is {resourcePermissions} ")
+            userName = "dev-manager@striking-arbor-264209.iam.serviceaccount.com"
+            identityPermissions = get_identity_permissions(permissionsGraph, userName)
+            print(f"resourcePermissions of {userName} is {identityPermissions} ")
             print("__Task 3 completed__")
+            resourceId = "folders/7"
+            resourcePermissions = get_resource_permissions(permissionsGraph, resourceId)
+            print(f"resourcePermissions of {resourceId} is {resourcePermissions} ")
+            print("__Task 4 completed__")
             return 0
         else:
             return 1

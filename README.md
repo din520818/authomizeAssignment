@@ -43,7 +43,7 @@ class Graph:
 - edges: List[Edge]    
 - nodes: List[Node] 
 
-def get\_user\_permissions(graph: Graph, user\_email: str): 
+def get_user_permissions(graph: Graph, user_email: str): 
 - pass 
 -------
 

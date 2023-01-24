@@ -1,3 +1,6 @@
+from prettytable import PrettyTable
+
+
 class Node:
     def __init__(self, _id: str, _type: str):
         self._id = _id
@@ -36,6 +39,28 @@ class Graph:
         self.edges = []
         self.nodes = []
 
+    def __eq__(self, newGraph):
+        if not isinstance(newGraph, Graph):
+            # don't attempt to compare against unrelated types
+            return NotImplemented
+        return len(self.edges) == len(newGraph.edges) and all(edg in self.edges for edg in newGraph.edges) and\
+               len(self.nodes) == len(newGraph.nodes) and all(nod in self.nodes for nod in newGraph.nodes)
+
+    def print_graph(self):
+        # Create a new table
+        table = PrettyTable()
+        # Add the headers
+        table.field_names = ["From Node", "Relationship", "To Node"]
+        for edge in self.edges:
+            fromNode = edge.from_node
+            fromNodeId = fromNode._id
+            toNode = edge.to_node
+            toNodeId = toNode._id
+            type = edge._type
+            table.add_row([f"{fromNodeId}-{fromNode._type}", f"{type}", f"{toNodeId}-{toNode._type}"])
+        # Print the table
+        print(table)
+
     def add_node(self, _id, _type):
         node = Node(_id, _type)
         if node not in self.nodes:
@@ -64,9 +89,22 @@ class Graph:
                 return node
         return None
 
-    def find_edge(self, from_node_id: str, to_node_id: str):
-        for edge in self.edges:
-            if edge.from_node.id == from_node_id and edge.to_node.id == to_node_id:
-                return edge
-        return None
+    def find_edges_to_node(self, to_node_id: str):
+        return [edg for edg in self.edges if edg.to_node._id == to_node_id]
 
+
+#
+# graphObj = Graph()
+# a = graphObj.add_node("1", "2")
+# b = graphObj.add_node("4", "3")
+# graphObj.add_edge(a, b, "a")
+# graphObj.add_edge(b, a, "b")
+#
+# graphObj1 = Graph()
+# a = graphObj1.add_node("1", "2")
+# b = graphObj1.add_node("4", "3")
+# graphObj1.add_edge(b, a, "b")
+# graphObj1.add_edge(a, b, "a")
+#
+#
+# print(graphObj == graphObj1)
