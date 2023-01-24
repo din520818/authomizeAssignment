@@ -181,7 +181,7 @@ def get_resource_permissions(graph: Graph, resource_id: str) -> List[Tuple[str, 
                     parentEdges = graph.find_edges_to_node(to_node_id=parent)
                     queue.extend(parentEdges)
                     visited.add(parent)
-    return permissions
+    return list(set(permissions))
 
 
 def authomizeMain() -> int:
