@@ -91,20 +91,3 @@ class Graph:
 
     def find_edges_to_node(self, to_node_id: str):
         return [edg for edg in self.edges if edg.to_node._id == to_node_id]
-
-
-#
-# graphObj = Graph()
-# a = graphObj.add_node("1", "2")
-# b = graphObj.add_node("4", "3")
-# graphObj.add_edge(a, b, "a")
-# graphObj.add_edge(b, a, "b")
-#
-# graphObj1 = Graph()
-# a = graphObj1.add_node("1", "2")
-# b = graphObj1.add_node("4", "3")
-# graphObj1.add_edge(b, a, "b")
-# graphObj1.add_edge(a, b, "a")
-#
-#
-# print(graphObj == graphObj1)
