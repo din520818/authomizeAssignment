@@ -6,13 +6,14 @@ Notes: Authomize assignment
 import os
 import sys
 import json
-from typing import List, Tuple
+from typing import List, Tuple, Any
+
 script_root_path = os.path.abspath(os.path.dirname(__file__))
 sys.path.append(script_root_path)
 from graphWeb.graphWeb import Graph
 
 
-def getPermissionsJsonList(permissionsJsonLFile: str) -> [int, List]:
+def getPermissionsJsonList(permissionsJsonLFile: str) -> tuple[int, list[Any]]:
     """
     :param permissionsJsonLFile: jsonL file location of GCP permissions policy
     :return: -response code of function
