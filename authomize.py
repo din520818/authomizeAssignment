@@ -7,6 +7,8 @@ import os
 import sys
 import json
 from typing import List, Tuple, Any
+from google.oauth2.credentials import Credentials
+from googleapiclient.discovery import build
 
 script_root_path = os.path.abspath(os.path.dirname(__file__))
 sys.path.append(script_root_path)
@@ -185,6 +187,16 @@ def get_resource_permissions(graph: Graph, resource_id: str) -> List[Tuple[str, 
     return list(set(permissions))
 
 
+def get_users_from_google(credentialsFile: str) -> List:
+    # use the service account json to connect to the Directory API
+    credentials = Credentials.from_service_account_file(credentialsFile,
+                    ['https://www.googleapis.com/auth/admin.directory.user'])
+    directory_service = build('admin', 'directory_v1', credentials=credentials)
+
+    users = directory_service.users().list(customer='my_customer', maxResults=500).execute()
+    return users
+
+
 def authomizeMain() -> int:
     """
     :return: status code
@@ -200,6 +212,8 @@ def authomizeMain() -> int:
             permissionsGraph.print_graph()
             print(f"Graph generated: {permissionsGraph}")
             print("__Task 1 completed__")
+
+            # Task 2
             resourceId = "folders/7"
             resourceAncestors = getResourceAncestors(permissionsGraph, resourceId)
             print(f"resourceAncestors of {resourceId} is {resourceAncestors} ")
@@ -208,14 +222,29 @@ def authomizeMain() -> int:
             resourceId = "organizations/1"
             print(f"resourceChildren of {resourceId} is {resourceChildren} ")
             print("__Task 2 completed__")
+
+            # Task 3
             userName = "dev-manager@striking-arbor-264209.iam.serviceaccount.com"
             identityPermissions = get_identity_permissions(permissionsGraph, userName)
             print(f"resourcePermissions of {userName} is {identityPermissions} ")
             print("__Task 3 completed__")
+
+            # Task 4
             resourceId = "folders/7"
             resourcePermissions = get_resource_permissions(permissionsGraph, resourceId)
             print(f"resourcePermissions of {resourceId} is {resourcePermissions} ")
             print("__Task 4 completed__")
+
+            # Task 5
+            # todo update the google key file and get the users list and verify
+            # todo QC
+            # credentialsFile = f"{script_root_path}/data/credentials_key_file"
+            # usersList = get_users_from_google(credentialsFile)
+            # print(f"Users List from google are {resourcePermissions}")
+            # print("__Task 5 completed__")
+
+            # todo Task 6
+            # Without the data from task 5 I cannot work on  task 6
             return 0
         else:
             return 1
