@@ -7,9 +7,6 @@ import os
 import sys
 import json
 from typing import List, Tuple, Any
-from google.oauth2.credentials import Credentials
-from googleapiclient.discovery import build
-
 script_root_path = os.path.abspath(os.path.dirname(__file__))
 sys.path.append(script_root_path)
 from graphWeb.graphWeb import Graph
